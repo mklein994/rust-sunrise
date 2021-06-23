@@ -1,5 +1,6 @@
 ## sunrise
 
+[![CI](https://github.com/mklein994/rust-sunrise/actions/workflows/ci.yml/badge.svg)](https://github.com/mklein994/rust-sunrise/actions/workflows/ci.yml)
 [![MIT License](http://img.shields.io/badge/license-MIT-9370d8.svg?style=flat)](http://opensource.org/licenses/MIT)
 
 This crate provides a function for calculating sunrise and sunset times using [this method](https://en.wikipedia.org/wiki/Sunrise_equation#Complete_calculation_on_Earth).
