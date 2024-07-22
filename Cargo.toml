@@ -13,7 +13,7 @@ edition = "2018"
 travis-ci = { repository = "nathan-osman/rust-sunrise" }
 
 [dependencies]
-chrono = "0.4"
+jiff = "0.1.0"
 
 [dev-dependencies]
 approx = "0.3.0"

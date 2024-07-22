@@ -30,13 +30,7 @@ use crate::noon::mean_solar_noon;
 use crate::transit::solar_transit;
 
 /// Calculates the sunrise and sunset times for the given location and date.
-pub fn sunrise_sunset(
-    latitude: f64,
-    longitude: f64,
-    year: i32,
-    month: u32,
-    day: u32,
-) -> (i64, i64) {
+pub fn sunrise_sunset(latitude: f64, longitude: f64, year: i16, month: i8, day: i8) -> (i64, i64) {
     let day: f64 = mean_solar_noon(longitude, year, month, day);
     let solar_anomaly: f64 = solar_mean_anomaly(day);
     let equation_of_center: f64 = equation_of_center(solar_anomaly);
