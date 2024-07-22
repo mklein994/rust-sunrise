@@ -13,4 +13,4 @@ edition = "2021"
 jiff = "0.1.0"
 
 [dev-dependencies]
-approx = "0.3.0"
+approx = "0.5.1"
