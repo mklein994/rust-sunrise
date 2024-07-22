@@ -9,9 +9,6 @@ categories = ["date-and-time"]
 license = "MIT"
 edition = "2018"
 
-[badges]
-travis-ci = { repository = "nathan-osman/rust-sunrise" }
-
 [dependencies]
 jiff = "0.1.0"
 
