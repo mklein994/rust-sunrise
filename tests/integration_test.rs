@@ -22,12 +22,16 @@
 
 use std::f64::consts::PI;
 
-use chrono::{DateTime, NaiveDate};
+#[cfg(all(feature = "chrono", not(feature = "jiff")))]
+use chrono::NaiveDate;
+#[cfg(all(not(feature = "chrono"), feature = "jiff"))]
+use jiff::civil::Date;
 use sunrise::{Coordinates, DawnType, SolarDay, SolarEvent};
 
 #[allow(deprecated)]
 use sunrise::sunrise_sunset;
 
+#[cfg(all(feature = "chrono", not(feature = "jiff")))]
 fn solar_day(year: i32) -> SolarDay {
     SolarDay::new(
         Coordinates::new(0., 0.).unwrap(),
@@ -35,19 +39,54 @@ fn solar_day(year: i32) -> SolarDay {
     )
 }
 
+#[cfg(all(not(feature = "chrono"), feature = "jiff"))]
+fn solar_day(year: i32) -> SolarDay {
+    SolarDay::new(
+        Coordinates::new(0., 0.).unwrap(),
+        Date::new(year.try_into().unwrap(), 1, 1).unwrap(),
+    )
+}
+
+#[cfg(all(feature = "chrono", not(feature = "jiff")))]
+macro_rules! expected_datetime {
+    ($value:expr) => {
+        chrono::DateTime::parse_from_rfc3339($value).unwrap()
+    };
+}
+
+#[cfg(all(feature = "chrono", not(feature = "jiff")))]
+macro_rules! expected_date {
+    ($year:expr, $month:expr, $day:expr) => {
+        chrono::NaiveDate::from_ymd_opt($year, $month, $day).unwrap()
+    };
+}
+
+#[cfg(all(not(feature = "chrono"), feature = "jiff"))]
+macro_rules! expected_datetime {
+    ($value:expr) => {
+        $value.parse().unwrap()
+    };
+}
+
+#[cfg(all(not(feature = "chrono"), feature = "jiff"))]
+macro_rules! expected_date {
+    ($year:expr, $month:expr, $day:expr) => {
+        jiff::civil::date($year, $month, $day)
+    };
+}
+
 #[test]
 #[allow(deprecated)]
 fn test_sunrise() {
     assert_eq!(sunrise_sunset(0., 0., 1970, 1, 1), (21594, 65228));
-
     assert_eq!(
         solar_day(1970).event_time(SolarEvent::Sunrise),
-        DateTime::parse_from_rfc3339("1970-01-01T05:59:54Z").unwrap()
+        expected_datetime!("1970-01-01T05:59:54Z")
     );
 
     assert_eq!(
         solar_day(1970).event_time(SolarEvent::Sunset),
-        DateTime::parse_from_rfc3339("1970-01-01T18:07:08Z").unwrap()
+        expected_datetime!("1970-01-01T18:07:08Z")
     );
 }
 
@@ -57,14 +96,14 @@ fn test_altitude() {
         solar_day(1970)
             .with_altitude(123.)
             .event_time(SolarEvent::Sunrise),
-        DateTime::parse_from_rfc3339("1970-01-01T05:58:14Z").unwrap()
+        expected_datetime!("1970-01-01T05:58:14Z")
     );
 
     assert_eq!(
         solar_day(1970)
             .with_altitude(-10.)
             .event_time(SolarEvent::Sunrise),
-        DateTime::parse_from_rfc3339("1970-01-01T06:00:22Z").unwrap()
+        expected_datetime!("1970-01-01T06:00:22Z")
     );
 }
 
@@ -72,12 +111,12 @@ fn test_altitude() {
 fn test_civil() {
     assert_eq!(
         solar_day(2023).event_time(SolarEvent::Dawn(DawnType::Civil)),
-        DateTime::parse_from_rfc3339("2023-01-01T05:37:08Z").unwrap()
+        expected_datetime!("2023-01-01T05:37:08Z")
     );
 
     assert_eq!(
         solar_day(2023).event_time(SolarEvent::Dusk(DawnType::Civil)),
-        DateTime::parse_from_rfc3339("2023-01-01T18:29:18Z").unwrap()
+        expected_datetime!("2023-01-01T18:29:18Z")
     );
 }
 
@@ -85,12 +124,12 @@ fn test_civil() {
 fn test_nautical() {
     assert_eq!(
         solar_day(2023).event_time(SolarEvent::Dawn(DawnType::Nautical)),
-        DateTime::parse_from_rfc3339("2023-01-01T05:11:00Z").unwrap()
+        expected_datetime!("2023-01-01T05:11:00Z")
     );
 
     assert_eq!(
         solar_day(2023).event_time(SolarEvent::Dusk(DawnType::Nautical)),
-        DateTime::parse_from_rfc3339("2023-01-01T18:55:27Z").unwrap()
+        expected_datetime!("2023-01-01T18:55:27Z")
     );
 }
 
@@ -98,12 +137,12 @@ fn test_nautical() {
 fn test_astronomical() {
     assert_eq!(
         solar_day(2023).event_time(SolarEvent::Dawn(DawnType::Astronomical)),
-        DateTime::parse_from_rfc3339("2023-01-01T04:44:45Z").unwrap()
+        expected_datetime!("2023-01-01T04:44:45Z")
     );
 
     assert_eq!(
         solar_day(2023).event_time(SolarEvent::Dusk(DawnType::Astronomical)),
-        DateTime::parse_from_rfc3339("2023-01-01T19:21:42Z").unwrap()
+        expected_datetime!("2023-01-01T19:21:42Z")
     );
 }
 
@@ -114,7 +153,7 @@ fn test_elevation() {
             elevation: PI / 4.0,
             morning: true
         }),
-        DateTime::parse_from_rfc3339("2023-01-01T02:42:24Z").unwrap()
+        expected_datetime!("2023-01-01T02:42:24Z")
     );
 
     assert_eq!(
@@ -122,7 +161,7 @@ fn test_elevation() {
             elevation: PI / 4.0,
             morning: false
         }),
-        DateTime::parse_from_rfc3339("2023-01-01T21:24:02Z").unwrap()
+        expected_datetime!("2023-01-01T21:24:02Z")
     );
 }
 
@@ -131,7 +170,7 @@ fn test_order() {
     let sd = {
         SolarDay::new(
             Coordinates::new(2.0, 10.0).unwrap(),
-            NaiveDate::from_ymd_opt(2024, 2, 23).unwrap(),
+            expected_date!(2024, 2, 23),
         )
         .with_altitude(100.0)
     };

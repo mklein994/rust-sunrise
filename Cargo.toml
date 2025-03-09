@@ -14,10 +14,13 @@ name = "sunrise"
 
 [features]
 no-std = ["dep:libm"]
-default = ["dep:chrono"]
+default = ["chrono"]
+chrono = ["dep:chrono"]
+jiff = ["dep:jiff"]
 
 [dependencies]
 chrono = { version = "0.4", default-features = false, features = [], optional = true }
+jiff = { version = "0.2", default-features = false, features = [], optional = true }
 
 # feature: no-std
 libm = { version = "0.2", optional = true }

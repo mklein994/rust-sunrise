@@ -26,7 +26,25 @@ You can use the `SolarDay` struct to perform computation of an event at a
 particular place and time:
 
 ```rust
+#[cfg(all(not(feature = "chrono"), feature = "jiff"))]
+fn main() {
+use jiff::civil::Date;
+use sunrise::{Coordinates, SolarDay, SolarEvent, DawnType};
+
+// January 1, 2016 in Toronto
+let date = Date::new(2016, 1, 1).unwrap();
+// NaiveDate::from_ymd_opt(2016, 1, 1).unwrap()
+let coord = Coordinates::new(43.6532, -79.3832).unwrap();
+
+let dawn = SolarDay::new(coord, date)
+    .with_altitude(54.)
+    .event_time(SolarEvent::Dawn(DawnType::Civil));
+}
+
+#[cfg(all(feature = "chrono", not(feature = "jiff")))]
+fn main() {
 use chrono::NaiveDate;
+
 use sunrise::{Coordinates, SolarDay, SolarEvent, DawnType};
 
 // January 1, 2016 in Toronto
@@ -36,6 +54,7 @@ let coord = Coordinates::new(43.6532, -79.3832).unwrap();
 let dawn = SolarDay::new(coord, date)
     .with_altitude(54.)
     .event_time(SolarEvent::Dawn(DawnType::Civil));
+}
 ```
 
 [crate]: https://crates.io/crates/sunrise "crates.io"
