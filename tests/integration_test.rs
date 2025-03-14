@@ -29,6 +29,7 @@ use jiff::civil::Date;
 use sunrise::{Coordinates, DawnType, SolarDay, SolarEvent};
 
 #[allow(deprecated)]
+#[cfg(not(feature = "jiff"))]
 use sunrise::sunrise_sunset;
 
 #[cfg(all(feature = "chrono", not(feature = "jiff")))]
@@ -77,6 +78,7 @@ macro_rules! expected_date {
 
 #[test]
 #[allow(deprecated)]
+#[cfg(not(feature = "jiff"))]
 fn test_sunrise() {
     assert_eq!(sunrise_sunset(0., 0., 1970, 1, 1), (21594, 65228));
     assert_eq!(

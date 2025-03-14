@@ -32,9 +32,6 @@ mod julian;
 mod math;
 mod solar_equation;
 
-#[cfg(all(not(feature = "chrono"), feature = "jiff"))]
-use jiff::civil::Date;
-
 pub use crate::coordinates::Coordinates;
 pub use crate::event::{DawnType, SolarEvent};
 pub use crate::solar_equation::SolarDay;
@@ -53,30 +50,6 @@ pub use crate::solar_equation::SolarDay;
     since = "1.1.0",
     note = "Use `SolarEvent` which is infaillibe, more flexible and explicit."
 )]
-#[cfg(all(not(feature = "chrono"), feature = "jiff"))]
-pub fn sunrise_sunset(
-    latitude: f64,
-    longitude: f64,
-    year: i32,
-    month: u32,
-    day: u32,
-) -> (i64, i64) {
-    let solar_day = SolarDay::new(
-        Coordinates::new(latitude, longitude).expect("invalid coordinates"),
-        Date::new(
-            year.try_into().unwrap(),
-            month.try_into().unwrap(),
-            day.try_into().unwrap(),
-        )
-        .expect("invalid date"),
-    );
-
-    (
-        solar_day.event_time(SolarEvent::Sunrise).as_second(),
-        solar_day.event_time(SolarEvent::Sunset).as_second(),
-    )
-}
-
 #[cfg(all(feature = "chrono", not(feature = "jiff")))]
 pub fn sunrise_sunset(
     latitude: f64,
