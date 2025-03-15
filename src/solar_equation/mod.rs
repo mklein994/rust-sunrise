@@ -28,16 +28,11 @@ mod longitude;
 mod perihelion;
 mod transit;
 
-#[cfg(all(not(feature = "chrono"), feature = "jiff"))]
-use jiff::{Timestamp, civil::Date};
-
-#[cfg(all(feature = "chrono", not(feature = "jiff")))]
-use chrono::{DateTime, NaiveDate, Utc};
-
 use crate::Coordinates;
 use crate::event::SolarEvent;
 use crate::julian::{julian_to_unix, mean_solar_noon};
 use crate::math::PI;
+use crate::util::{DateUtil, SunriseDateish};
 
 use self::anomaly::solar_mean_anomaly;
 use self::center::equation_of_center;
@@ -92,25 +87,7 @@ impl SolarDay {
     /// Initialize given position and a date.
     ///
     /// This will pre-compute some values so you should re-use this struct if it is possible.
-    #[cfg(all(feature = "chrono", not(feature = "jiff")))]
-    pub fn new(coord: Coordinates, date: NaiveDate) -> Self {
-        let day = mean_solar_noon(coord.lon(), date);
-        let solar_anomaly = solar_mean_anomaly(day);
-        let equation_of_center = equation_of_center(solar_anomaly);
-        let ecliptic_longitude = ecliptic_longitude(solar_anomaly, equation_of_center, day);
-        let solar_transit = solar_transit(day, solar_anomaly, ecliptic_longitude);
-        let declination = declination(ecliptic_longitude);
-
-        Self {
-            lat: coord.lat(),
-            altitude: 0.,
-            solar_transit,
-            declination,
-        }
-    }
-
-    #[cfg(all(not(feature = "chrono"), feature = "jiff"))]
-    pub fn new(coord: Coordinates, date: Date) -> Self {
+    pub fn new(coord: Coordinates, date: crate::SunriseDate) -> Self {
         let day = mean_solar_noon(coord.lon(), date);
         let solar_anomaly = solar_mean_anomaly(day);
         let equation_of_center = equation_of_center(solar_anomaly);
@@ -134,19 +111,10 @@ impl SolarDay {
     }
 
     /// Get the time for when the input event will happen.
-    #[cfg(all(feature = "chrono", not(feature = "jiff")))]
-    pub fn event_time(&self, event: SolarEvent) -> DateTime<Utc> {
+    pub fn event_time(&self, event: SolarEvent) -> crate::SunriseTimestamp {
         let hour_angle = hour_angle(self.lat, self.declination, self.altitude, event);
         let frac = hour_angle / (2. * PI);
         let timestamp = julian_to_unix(self.solar_transit + frac);
-        DateTime::from_timestamp(timestamp, 0).expect("invalid result")
-    }
-
-    #[cfg(all(not(feature = "chrono"), feature = "jiff"))]
-    pub fn event_time(&self, event: SolarEvent) -> Timestamp {
-        let hour_angle = hour_angle(self.lat, self.declination, self.altitude, event);
-        let frac = hour_angle / (2. * PI);
-        let timestamp = julian_to_unix(self.solar_transit + frac);
-        Timestamp::new(timestamp, 0).expect("invalid result")
+        DateUtil::from_timestamp(timestamp)
     }
 }

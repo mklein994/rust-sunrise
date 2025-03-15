@@ -20,18 +20,14 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
 
-#[cfg(all(feature = "chrono", not(feature = "jiff")))]
-use chrono::{NaiveDate, NaiveTime};
-
-#[cfg(all(not(feature = "chrono"), feature = "jiff"))]
-use jiff::civil::{Date, Time};
+use crate::{DateUtil, SunriseDateish};
 
 const SECONDS_IN_A_DAY: f64 = 86400.;
 const UNIX_EPOCH_JULIAN_DAY: f64 = 2440587.5;
 #[cfg(all(feature = "chrono", not(feature = "jiff")))]
-const NOON_TIME: NaiveTime = NaiveTime::from_hms_opt(12, 0, 0).unwrap();
+const NOON_TIME: chrono::NaiveTime = chrono::NaiveTime::from_hms_opt(12, 0, 0).unwrap();
 #[cfg(all(not(feature = "chrono"), feature = "jiff"))]
-const NOON_TIME: Time = Time::constant(12, 0, 0, 0);
+const NOON_TIME: jiff::civil::Time = jiff::civil::Time::constant(12, 0, 0, 0);
 
 /// Converts a unix timestamp to a Julian day.
 pub(crate) fn unix_to_julian(timestamp: i64) -> f64 {
@@ -45,21 +41,8 @@ pub(crate) fn julian_to_unix(day: f64) -> i64 {
 
 /// Calculates the time at which the sun is at its highest altitude and returns
 /// the time as a Julian day.
-#[cfg(all(feature = "chrono", not(feature = "jiff")))]
-pub(crate) fn mean_solar_noon(lon: f64, date: NaiveDate) -> f64 {
-    unix_to_julian(date.and_time(NOON_TIME).and_utc().timestamp()) - lon / 360.
-}
-
-#[cfg(all(not(feature = "chrono"), feature = "jiff"))]
-pub(crate) fn mean_solar_noon(lon: f64, date: Date) -> f64 {
-    //unix_to_julian(date.and_time(NOON_TIME).and_utc().timestamp()) - lon / 360.
-    unix_to_julian(
-        date.to_datetime(NOON_TIME)
-            .to_zoned(jiff::tz::TimeZone::UTC)
-            .unwrap()
-            .timestamp()
-            .as_second(),
-    ) - lon / 360.
+pub(crate) fn mean_solar_noon(lon: f64, date: crate::SunriseDate) -> f64 {
+    unix_to_julian(DateUtil::into_timestamp(date, NOON_TIME)) - lon / 360.
 }
 
 #[cfg(test)]

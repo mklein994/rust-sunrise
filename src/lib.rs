@@ -31,10 +31,25 @@ mod event;
 mod julian;
 mod math;
 mod solar_equation;
+mod util;
+
+use util::{DateUtil, SunriseDateish};
 
 pub use crate::coordinates::Coordinates;
 pub use crate::event::{DawnType, SolarEvent};
 pub use crate::solar_equation::SolarDay;
+
+#[cfg(all(feature = "chrono", not(feature = "jiff")))]
+pub type SunriseDate = chrono::NaiveDate;
+
+#[cfg(all(not(feature = "chrono"), feature = "jiff"))]
+pub type SunriseDate = jiff::civil::Date;
+
+#[cfg(all(feature = "chrono", not(feature = "jiff")))]
+pub type SunriseTimestamp = chrono::DateTime<chrono::Utc>;
+
+#[cfg(all(not(feature = "chrono"), feature = "jiff"))]
+pub type SunriseTimestamp = jiff::Timestamp;
 
 /// Calculates the sunrise and sunset times for the given location and date.
 ///
