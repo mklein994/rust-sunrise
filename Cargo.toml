@@ -13,12 +13,15 @@ edition = "2024"
 name = "sunrise"
 
 [features]
-default = ["std", "dep:chrono"]
+default = ["std", "chrono"]
 std = []
 libm = ["dep:libm"]
+chrono = ["dep:chrono"]
+jiff = ["dep:jiff"]
 
 [dependencies]
 chrono = { version = "0.4", default-features = false, features = [], optional = true }
+jiff = { version = "0.2", default-features = false, features = [], optional = true }
 
 # feature: libm
 libm = { version = "0.2", optional = true }

@@ -29,17 +29,33 @@ extern crate std;
 #[cfg(not(any(feature = "std", feature = "libm")))]
 compile_error!("either the `std` or `libm` feature is required");
 
+#[cfg(all(feature = "chrono", feature = "jiff"))]
+compile_error!("feature \"chrono\" and feature \"jiff\" cannot be enabled at the same time");
+
 mod coordinates;
 mod event;
 mod julian;
 mod math;
 mod solar_equation;
+mod util;
 
-use chrono::NaiveDate;
+use util::{DateUtil, SunriseDateish};
 
 pub use crate::coordinates::Coordinates;
 pub use crate::event::{DawnType, SolarEvent};
 pub use crate::solar_equation::SolarDay;
+
+#[cfg(all(feature = "chrono", not(feature = "jiff")))]
+pub type SunriseDate = chrono::NaiveDate;
+
+#[cfg(all(not(feature = "chrono"), feature = "jiff"))]
+pub type SunriseDate = jiff::civil::Date;
+
+#[cfg(all(feature = "chrono", not(feature = "jiff")))]
+pub type SunriseTimestamp = chrono::DateTime<chrono::Utc>;
+
+#[cfg(all(not(feature = "chrono"), feature = "jiff"))]
+pub type SunriseTimestamp = jiff::Timestamp;
 
 /// Calculates the sunrise and sunset times for the given location and date.
 ///
@@ -55,6 +71,7 @@ pub use crate::solar_equation::SolarDay;
     since = "1.1.0",
     note = "Use `SolarEvent` which is panic-free, more flexible and explicit."
 )]
+#[cfg(all(feature = "chrono", not(feature = "jiff")))]
 pub fn sunrise_sunset(
     latitude: f64,
     longitude: f64,
@@ -64,7 +81,7 @@ pub fn sunrise_sunset(
 ) -> (i64, i64) {
     let solar_day = SolarDay::new(
         Coordinates::new(latitude, longitude).expect("invalid coordinates"),
-        NaiveDate::from_ymd_opt(year, month, day).expect("invalid date"),
+        chrono::NaiveDate::from_ymd_opt(year, month, day).expect("invalid date"),
     );
 
     (

@@ -30,7 +30,7 @@ mod transit;
 
 use core::f64::consts::PI;
 
-use chrono::{DateTime, NaiveDate, Utc};
+use crate::util::{DateUtil, SunriseDateish};
 
 use crate::Coordinates;
 use crate::event::SolarEvent;
@@ -49,6 +49,22 @@ use self::transit::solar_transit;
 /// # Example
 ///
 /// ```
+/// #[cfg(all(not(feature = "chrono"), feature = "jiff"))]
+/// fn main() {
+/// use jiff::civil::Date;
+/// use sunrise::{Coordinates, DawnType, SolarDay, SolarEvent};
+///
+/// // January 1, 2016 in Toronto
+/// let date = Date::new(2016, 1, 1).unwrap();
+/// let coord = Coordinates::new(43.6532, -79.3832).unwrap();
+///
+/// let dawn = SolarDay::new(coord, date)
+///     .with_altitude(54.)
+///     .event_time(SolarEvent::Dawn(DawnType::Civil));
+/// }
+///
+/// #[cfg(all(feature = "chrono", not(feature = "jiff")))]
+/// fn main() {
 /// use chrono::NaiveDate;
 /// use sunrise::{Coordinates, DawnType, SolarDay, SolarEvent};
 ///
@@ -59,6 +75,7 @@ use self::transit::solar_transit;
 /// let dawn = SolarDay::new(coord, date)
 ///     .with_altitude(54.)
 ///     .event_time(SolarEvent::Dawn(DawnType::Civil));
+/// }
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct SolarDay {
@@ -72,7 +89,7 @@ impl SolarDay {
     /// Initialize given position and a date.
     ///
     /// This will pre-compute some values so you should re-use this struct if it is possible.
-    pub fn new(coord: Coordinates, date: NaiveDate) -> Self {
+    pub fn new(coord: Coordinates, date: crate::SunriseDate) -> Self {
         let day = mean_solar_noon(coord.lon(), date);
         let solar_anomaly = solar_mean_anomaly(day);
         let equation_of_center = equation_of_center(solar_anomaly);
@@ -98,7 +115,7 @@ impl SolarDay {
     /// Get the time for when the input event will happen.
     ///
     /// Returns `None` if the event does not happen (e.g., sunset in a polar day).
-    pub fn event_time(&self, event: SolarEvent) -> Option<DateTime<Utc>> {
+    pub fn event_time(&self, event: SolarEvent) -> Option<crate::SunriseTimestamp> {
         let hour_angle = hour_angle(self.lat, self.declination, self.altitude, event);
         if hour_angle.is_nan() {
             return None;
@@ -106,6 +123,6 @@ impl SolarDay {
 
         let frac = hour_angle / (2. * PI);
         let timestamp = julian_to_unix(self.solar_transit + frac);
-        Some(DateTime::from_timestamp(timestamp, 0).expect("invalid result"))
+        Some(DateUtil::from_timestamp(timestamp))
     }
 }
